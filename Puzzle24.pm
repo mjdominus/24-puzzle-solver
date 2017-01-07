@@ -7,7 +7,7 @@ use Scalar::Util 'reftype';
 has target => (
   is => 'ro',
   required => 1,
- );
+);
 
 has size => (
   is => 'ro',
@@ -20,6 +20,15 @@ has pool => (
   default => sub { [ (0) x $_[0]->size ] },
   lazy => 1,
  );
+
+sub pool_string {
+  my ($self, $sep, $pre, $post) = @_;
+  $sep //= " ";
+  $pre //= "";
+  $post //= "";
+  $pre . join($sep => @{$self->pool}) . $post;
+}
+
 
 has solver => (
   is => 'rwp',
