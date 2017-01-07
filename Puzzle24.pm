@@ -41,7 +41,7 @@ sub _build_solver {
   my ($self) = @_;
   return
     Puzzle24::Solver->new({ init   => $self->pool,
-                            target => $self->target,
+                            is_winner => sub { Puzzle24::Solver::expr_value($_[0]) == $self->target },
                           });
 }
 
@@ -83,7 +83,7 @@ has init => (
   required => 1,
 );
 
-has target => (
+has is_winner => (
   is => 'ro',
   required => 1,
 );
@@ -150,7 +150,7 @@ sub solve {
     # is the current node a winner?
     if (expr_count($node) == 1) {
       my $expr = $node->[0];
-      return $expr if expr_value($expr) == $self->target;
+      return $expr if $self->is_winner->($expr);
     }
 
     # find the nodes that follow this one in the search
