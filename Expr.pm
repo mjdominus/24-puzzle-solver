@@ -104,6 +104,11 @@ sub to_ezpr {
   return $result;
 }
 
+sub id_string {
+  my ($self) = @_;
+  $self->to_ezpr->normalize->to_string;
+}
+
 package Ezpr;
 use Scalar::Util qw(blessed);
 # An Ezpr is an expression in the following form: one of
