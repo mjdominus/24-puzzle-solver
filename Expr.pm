@@ -94,7 +94,11 @@ sub to_ezpr {
       $result->merge($b->cast($type)->reverse);
     }
   } else {
-    $result->install(undef, $b);
+    if ($covariant) {
+      $result->install($b);
+    } else {
+      $result->install(undef, $b);
+    }
   }
 
   return $result;
