@@ -3,11 +3,26 @@ package Puzzle24;
 use Math::BigRat;
 use Moo;
 use Scalar::Util 'reftype';
+use Carp qw(croak);
 
 has target => (
   is => 'ro',
-  required => 1,
-);
+  required => 0,
+ );
+
+has is_winner => (
+  is => 'ro',
+  lazy => 1,
+  builder => 1,
+ );
+
+# It would be better if there was a construct-time error message thrown
+sub _build_is_winner {
+  my ($self) = @_;
+  my $target = $self->target;
+  croak "No target or winner function specified" unless defined $target;
+  sub { Puzzle24::Solver::expr_value($_[0]) == $target };
+}
 
 has size => (
   is => 'ro',
@@ -29,7 +44,6 @@ sub pool_string {
   $pre . join($sep => @{$self->pool}) . $post;
 }
 
-
 has solver => (
   is => 'rwp',
   lazy => 1,
@@ -41,7 +55,7 @@ sub _build_solver {
   my ($self) = @_;
   return
     Puzzle24::Solver->new({ init   => $self->pool,
-                            is_winner => sub { Puzzle24::Solver::expr_value($_[0]) == $self->target },
+                            is_winner => $self->is_winner,
                           });
 }
 

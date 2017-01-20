@@ -5,9 +5,9 @@ use Puzzle24;
 $|=1;
 
 
-my (@pool) = @ARGV;
+my ($TARGET, @pool) = @ARGV;
 
-my $puzzle = Puzzle24->new({ target => 24,
+my $puzzle = Puzzle24->new({ target => $TARGET,
                              pool => \@pool,
                            });
 
