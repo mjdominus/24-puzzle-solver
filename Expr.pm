@@ -37,7 +37,7 @@ sub from_list {
   my @stack;
   while (@arr) {
     my $tok = shift @arr;
-    if ($tok =~ /^ [1-9] [0-9]* $/x) {
+    if ($tok =~ /^ [0-9]+ $/x) {
       push @stack, leaf($tok);
     } else {
       my $s1 = pop @stack;
@@ -108,7 +108,8 @@ use Scalar::Util qw(blessed);
 #     Mul [a,b,...] [m,n,...]    which represents (a*b*..)/(m*n*...)
 
 sub new_con {
-  my ($class, $con) = @_;
+  my ($base, $con) = @_;
+  my $class = ref $base || $base;
   bless [ 'CON', $con ] => $class;
 }
 sub is_con { $_[0][0] eq "CON" }
@@ -148,6 +149,15 @@ sub type { $_[0][0] }
 sub top { $_[0][1] }
 sub bot { $_[0][2] }
 
+sub clone {
+  my ($self) = @_;
+  return $self->new_con($self->con) if $self->is_con;
+
+  my @top = map $_->clone, @{$self->top};
+  my @bot = map $_->clone, @{$self->bot};
+  $self->new_node($self->type, \@top, \@bot);
+}
+
 sub reverse {
   my ($self) = @_;
   return $self->new_node($self->type, $self->bot, $self->top);
@@ -170,8 +180,8 @@ sub to_string {
   my ($self) = @_;
   if ($self->is_con) { return $self->con }
   my $type = $self->type;
-  my @tops = map blessed($_) ? $_->to_string : $_, @{$self->top};
-  my @bots = map blessed($_) ? $_->to_string : $_, @{$self->bot};
+  my @tops = map $_->to_string, @{$self->top};
+  my @bots = map $_->to_string, @{$self->bot};
   return join " " => $type, "[", @tops, "#", @bots, "]";
 }
 
@@ -181,7 +191,87 @@ sub cast {
   die sprintf "can't cast %s to type %s\n", $self->type, $type
     unless $self->is_con;
 
-  return $self->new_node($type, [ $self->con ], []);
+  return $self->new_node($type, [ $self ], []);
+}
+
+my %identity = (SUM => 0, MUL => 1);
+sub normalize {
+  my ($self) = @_;
+
+  return if $self->is_con;
+
+  if ($self->type eq "MUL" && $self->contains_zero) {
+    $self->become_zero;
+    return;
+  }
+
+  # Recursively normalize subexpressions
+  for my $sub (@{$self->top}, @{$self->bot}) {
+    $sub->normalize;
+  }
+
+  # eliminate identity elements
+  my $id = $identity{$self->type};
+  @{$self->top} = grep ! ($_->is_con && $_->con == $id), @{$self->top};
+  @{$self->bot} = grep ! ($_->is_con && $_->con == $id), @{$self->bot};
+
+  # sort by value
+  @{$self->top} = sort by_expr_value @{$self->top};
+  @{$self->bot} = sort by_expr_value @{$self->bot};
+
+  return $self;
+}
+
+sub by_expr_value {
+  # constants come first
+  if ($b->is_con) {
+    if ($a->is_con) {
+      return $a->con <=> $b->con;
+    } else {
+      return 1;
+    }
+  } elsif ($a->is_con) {
+    return -1;
+  }
+
+  # neither is a constant
+  return $a->value <=> $b->value;
+}
+
+sub contains_zero {
+  my ($self) = @_;
+  for my $sub (@{$self->top}) { return 1 if $sub->is_con && $sub->con == 0 }
+  return;
+}
+
+# mutate object to turn it into a zero
+sub become_zero {
+  my ($self) = @_;
+  @$self = @{$self->new_con(0)};
+}
+
+sub sum {
+  my $sum = 0;
+  $sum += $_ for @_;
+  return $sum;
+}
+
+sub prod {
+  my $prod = 1;
+  $prod *= $_ for @_;
+  return $prod;
+}
+
+sub value {
+  my ($self) = @_;
+  return $self->con if $self->is_con;
+  if ($self->type eq "SUM") {
+    return sum(@{$self->top}) - sum(@{$self->bot});
+  } elsif ($self->type eq "MUL") {
+    return prod(@{$self->top}) / prod(@{$self->bot});
+  } else {
+    die "What? " . $self->type;
+  }
 }
 
 1;
