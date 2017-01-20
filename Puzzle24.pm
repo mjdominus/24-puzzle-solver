@@ -89,6 +89,7 @@ sub bump {
 package Puzzle24::Solver;
 use Scalar::Util 'reftype';
 use Moo;
+use Expr ();
 
 # building block numbers
 has init => (
@@ -206,7 +207,7 @@ sub combine {
   return if ! $self->negative_allowed && $val < 0;
   return if ! $self->fraction_allowed && ! $val->is_int;
   ($e1, $e2) = ($e2, $e1) if reversed($op);
-  my $new_expr = "(" . expr_str($e1) . " $op_name " . expr_str($e2) . ")";
+  my $new_expr = Expr::node(expr_tree($e1), $op_name, expr_tree($e2));
   return expr($new_expr, $val,
               [$val, expr_intermediates($e1), expr_intermediates($e2)]);
 }
@@ -216,17 +217,17 @@ sub node { bless [ @_ ] => "Node" }
 sub exprs { my ($node) = @_; return @$node }
 sub expr_count { scalar @{$_[0]} }
 
-# an expression has: the stringization and its value
+# an expression has: an Expr object and its value
 sub base_expr {
   my ($con) = @_;
-  return expr($con, Math::BigRat->new($con), []);
+  return expr(Expr::leaf($con), Math::BigRat->new($con), []);
 }
 sub expr {
-  my ($string, $val, $intermediate) = @_;
-  [ $string, $val, $intermediate ];
+  my ($expr, $val, $intermediate) = @_;
+  [ $expr, $val, $intermediate ];
 }
 sub expr_value { $_[0][1] }
-sub expr_str { $_[0][0] }
+sub expr_str { $_[0][0]->to_string }
 sub expr_intermediates { @{$_[0][2]} }
-
+sub expr_tree { $_[0][0] }
 1;

@@ -12,5 +12,5 @@ my $puzzle = Puzzle24->new({ target => $TARGET,
                            });
 
 while (my $sol = $puzzle->one_solution) {
-    print "$sol->[0]\n";
+    print $sol->[0]->to_string, "\n";
 }
