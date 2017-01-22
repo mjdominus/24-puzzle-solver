@@ -16,7 +16,6 @@ while (1) {
   my $pool = join "", @{$puzzle->pool};
   my @sols;
   while (my $sol = $puzzle->solver->solve) {
-#    print "@$sol\n";
     push @sols, $sol->to_string;
   }
   print $pool, ",", 0+@sols, ",", join(";" => @sols), "\n" if @sols;
