@@ -31,6 +31,14 @@ sub to_string {
   }
 }
 
+sub to_rpn {
+  my ($self) = @_;
+  return $self->con if $self->is_leaf;
+  my ($a, $b) = $self->exprs;
+  return join " " => $a->to_rpn, $b->to_rpn, $self->op;
+}
+
+
 # RPN
 sub from_list {
   my (@arr) = @{$_[0]};
@@ -212,6 +220,9 @@ sub normalize {
   if ($self->type eq "MUL" && $self->contains_zero) {
     $self->become_zero;
     return;
+  # } elsif ($self->type eq "SUM" && $self->is_simple_zero) {
+  #   $self->become_zero;
+  #   return;
   }
 
   # Recursively normalize subexpressions
@@ -219,10 +230,41 @@ sub normalize {
     $sub->normalize;
   }
 
+  # eliminate common items from both top and bottom
+  # This also eliminates common zeroes, which is okay, because
+  # they would be eliminated anyway from sums, and we already returned early
+  # if the numeraotr of a mul contains any
+  {
+    my %top;
+    for my $x (grep $_->is_con, @{$self->top}) { push @{$top{$x->con}}, $x }
+    for my $x (grep $_->is_con, @{$self->bot}) {
+      my $val = $x->con;
+      if (@{$top{$val}}) {
+        $top{$val}[0][0] = "KILL";
+        shift @{$top{$val}};
+        $x->[0] = "KILL";
+      }
+    }
+    @{$self->top} = grep ! ($_->[0] eq "KILL"), @{$self->top};
+    @{$self->bot} = grep ! ($_->[0] eq "KILL"), @{$self->bot};
+  }
+
   # eliminate identity elements
   my $id = $identity{$self->type};
   @{$self->top} = grep ! ($_->is_con && $_->con == $id), @{$self->top};
   @{$self->bot} = grep ! ($_->is_con && $_->con == $id), @{$self->bot};
+
+  # If there's hardly anything left, turn self into a constant
+  { my $total_size = $self->total_size;
+    if ($total_size == 0) {
+      $self->become_constant($self->value);
+      return $self;
+    } elsif ($total_size == 1) {
+      my ($item) = (@{$self->top}, @{$self->bot});
+      @{$self} = @$item;
+      return $self;
+    }
+  }
 
   # sort by value
   @{$self->top} = sort by_expr_value @{$self->top};
@@ -247,16 +289,33 @@ sub by_expr_value {
   return $a->value <=> $b->value;
 }
 
+# a product contains a factor of 0 in its numerator
 sub contains_zero {
   my ($self) = @_;
   for my $sub (@{$self->top}) { return 1 if $sub->is_con && $sub->con == 0 }
   return;
 }
 
-# mutate object to turn it into a zero
+# # the postiive and negative parts of a sum are equal
+# sub is_simple_zero {
+#   my ($self) = @_;
+#   my $sum = 0;
+#   for my $x (@{$self->top}) { return unless $x->is_con;
+#                               $sum += $x->con }
+#   for my $x (@{$self->bot}) { return unless $x->is_con;
+#                               $sum -= $x->con }
+#   return $sum == 0;
+# }
+
+# mutate object to turn it into a constant
+sub become_constant {
+  my ($self, $con) = @_;
+  @$self = @{$self->new_con($con)};
+}
+
 sub become_zero {
   my ($self) = @_;
-  @$self = @{$self->new_con(0)};
+  $self->become_constant(0);
 }
 
 sub sum {
@@ -274,13 +333,29 @@ sub prod {
 sub value {
   my ($self) = @_;
   return $self->con if $self->is_con;
+  my @top = map $_->value, @{$self->top};
+  my @bot = map $_->value, @{$self->bot};
   if ($self->type eq "SUM") {
-    return sum(@{$self->top}) - sum(@{$self->bot});
+    return sum(@top) - sum(@bot);
   } elsif ($self->type eq "MUL") {
-    return prod(@{$self->top}) / prod(@{$self->bot});
+    return prod(@top) / prod(@bot);
   } else {
     die "What? " . $self->type;
   }
+}
+
+sub total_size {
+  my ($self) = @_;
+  my @x = (@{$self->top}, @{$self->bot});
+  return 0 + @x;
+}
+
+# all subexpressions are constants
+sub is_simple {
+  my ($self) = @_;
+  return 1 if $self->is_con;
+  for my $x (@{$self->top}, @{$self->bot}) { return unless $x->is_con }
+  return 1;
 }
 
 1;
