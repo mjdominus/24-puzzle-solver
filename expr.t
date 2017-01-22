@@ -130,7 +130,6 @@ subtest "normalizations of various complete expressions" => sub {
   # I'm not sure if this is a bug; nor is Lily
   # Iris says that it *is* a bug.
   subtest "2 3 4 6 : is X / Y the same as X * Y when Y is a compound expression with value 1?" => sub {
-    local $TODO = "We aren't sure if these are bugs";
     $check->([
       "4 6 * 3 2 - *",
       "4 6 * 3 2 - /",

@@ -253,8 +253,8 @@ sub normalize {
 
   # eliminate identity elements
   my $id = $identity{$self->type};
-  @{$self->top} = grep ! ($_->is_con && $_->con == $id), @{$self->top};
-  @{$self->bot} = grep ! ($_->is_con && $_->con == $id), @{$self->bot};
+  @{$self->top} = grep ! ($_->value == $id), @{$self->top};
+  @{$self->bot} = grep ! ($_->value == $id), @{$self->bot};
 
   # If there's hardly anything left, turn self into a constant
   { my $total_size = $self->total_size;
