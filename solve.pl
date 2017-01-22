@@ -13,8 +13,7 @@ my $solver = Puzzle24->new({ target => $TARGET,
 
 my %seen;
 my $letter = "A";
-while (my $sol = $solver->solve) {
-    my $expr = $sol->[0];
+while (my $expr = $solver->solve) {
 #    printf "## %s\n", $expr->to_string;
     my $id_string = $expr->id_string;
     $seen{$id_string} //= $letter++;

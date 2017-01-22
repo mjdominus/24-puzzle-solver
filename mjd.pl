@@ -13,9 +13,13 @@ my $puzzle = Puzzle24->new({ target => $TARGET,
                            });
 
 while (1) {
-  while (my $sol = $puzzle->one_solution) {
-    print "(@{$puzzle->pool}) $sol->[0]\n";
+  my $pool = join "", @{$puzzle->pool};
+  my @sols;
+  while (my $sol = $puzzle->solver->solve) {
+#    print "@$sol\n";
+    push @sols, $sol->to_string;
   }
+  print $pool, ",", 0+@sols, ",", join(";" => @sols), "\n" if @sols;
 } continue {
   last unless $puzzle->bump;
 }

@@ -156,6 +156,23 @@ sub push_queue {
   unshift @{$self->queue}, @items;
 }
 
+has eliminate_duplicates => (
+  is => 'ro',
+  default => sub { 1 },
+);
+
+has seen_id_strings => (
+  is => 'ro',
+  default => sub { {} },
+  clearer => 1,
+ );
+
+sub has_seen {
+  my ($self, $str) = @_;
+  my $seen = $self->seen_id_strings;
+  return $seen->{$str}++;
+}
+
 sub solve {
   my ($self) = @_;
 
@@ -165,7 +182,12 @@ sub solve {
     # is the current node a winner?
     if (expr_count($node) == 1) {
       my $expr = $node->[0];
-      return $expr if $self->is_winner->($expr);
+      if ($self->is_winner->($expr)) {
+        $DB::single=1;
+        if (!($self->eliminate_duplicates && $self->has_seen(expr_id($expr)))) {
+          return expr_tree($expr);
+        }
+      }
     }
 
     # find the nodes that follow this one in the search
@@ -228,6 +250,7 @@ sub expr {
 }
 sub expr_value { $_[0][1] }
 sub expr_str { $_[0][0]->to_string }
+sub expr_id { $_[0][0]->id_string }
 sub expr_intermediates { @{$_[0][2]} }
 sub expr_tree { $_[0][0] }
 1;
