@@ -292,7 +292,8 @@ sub by_expr_value {
   }
 
   # neither is a constant
-  return $a->value <=> $b->value;
+  return $a->value <=> $b->value
+         || $a->to_string cmp $b->to_string;
 }
 
 # a product contains a factor of 0 in its numerator
