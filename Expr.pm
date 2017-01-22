@@ -230,6 +230,8 @@ sub normalize {
     $sub->normalize;
   }
 
+  $self->compact;
+
   # eliminate common items from both top and bottom
   # This also eliminates common zeroes, which is okay, because
   # they would be eliminated anyway from sums, and we already returned early
@@ -320,6 +322,34 @@ sub become_constant {
 sub become_zero {
   my ($self) = @_;
   $self->become_constant(0);
+}
+
+# If this expression has any subexpressions of the same type,
+# lift the subexpressions up one node
+sub compact {
+  my ($self) = @_;
+  my $type = $self->type;
+  my @new_top;
+  my @new_bot;
+
+  for my $x (@{$self->top}) {
+    if ($x->type eq $type) {    # lift
+      push @new_top, @{$x->top};
+      push @new_bot, @{$x->bot};
+    } else {
+      push @new_top, $x;
+    }
+  }
+  for my $x (@{$self->bot}) {
+    if ($x->type eq $type) {    # lift
+      push @new_bot, @{$x->top};
+      push @new_top, @{$x->bot};
+    } else {
+      push @new_bot, $x;
+    }
+  }
+  @{$self->top} = @new_top;
+  @{$self->bot} = @new_bot;
 }
 
 sub sum {

@@ -185,10 +185,5 @@ subtest "zero handling in sums" => sub {
   }
 };
 
-subtest "Ezpr::total_size" => sub {
-  my $ezpr = Ezpr->new_node("SUM", [ Ezpr->new_con(1) ], [ Ezpr->new_con(2) ]);
-  is($ezpr->total_size, 2, "regression");
-};
-
 
 done_testing();
