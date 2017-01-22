@@ -260,9 +260,13 @@ sub normalize {
       $self->become_constant($self->value);
       return $self;
     } elsif ($total_size == 1) {
-      my ($item) = (@{$self->top}, @{$self->bot});
-      @{$self} = @$item;
-      return $self;
+      # EXCEPTION: MUL [ # 3 ] and SUB [ # 3 ] should not turn into 3!!
+      # (should SUB [ # 3 ] turn into CON -3?)
+      unless (@{$self->top} == 0) {
+        my ($item) = (@{$self->top}, @{$self->bot});
+        @{$self} = @$item;
+        return $self;
+      }
     }
   }
 
