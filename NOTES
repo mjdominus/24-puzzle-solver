@@ -1,0 +1,24 @@
+
+
+Needed features:
+
+1. Generate better-looking output:
+
+   a. Omit superfluous parentheses
+   b. Omit spaces around / signs
+   c. Use × instead of *
+
+2. Generate simpler output:
+
+   Don't generate 4 ÷ ( (7 - 6) ÷ 6 ).
+   Generate 4 × 6 × (7 - 6), which is equivalent.
+   Both normalize to MUL [ 4 6 # ].
+   Possible method:
+     Convert expression to ezpr, but normalize only partly:
+         Don't eliminate identities, common factors.
+         But _do_ sort and lift nodes
+     Unconvert resulting ezpr to normal form
+     For example, 4 ÷ ( (7 - 6) ÷ 6 )
+       initial form: MUL [ 4 # MUL [ SUM [ 7 # 6 ] # 6 ] ]
+       seminormalizes to MUL [ 4 6 # SUM [ 7 # 6 ] ]   (lifting)
+       unconverts to (4×6)÷(7-6) which is quite acceptable
