@@ -193,5 +193,4 @@ subtest "zero handling in sums" => sub {
   }
 };
 
-
 done_testing();

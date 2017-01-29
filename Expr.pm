@@ -23,12 +23,7 @@ sub exprs { my ($op, @x) = @{$_[0]}; return @x }
 
 sub to_string {
   my ($self) = @_;
-  if ($self->is_leaf) {
-    return $self->con;
-  } else {
-    my ($a, $b) = $self->exprs;
-    return join " " => "(", $a->to_string, $self->op, $b->to_string, ")";
-  }
+  return $self->to_ezpr->seminormalize->to_arith_string;
 }
 
 sub to_rpn {
@@ -202,6 +197,49 @@ sub to_string {
   return join " " => $type, "[", @tops, "#", @bots, "]";
 }
 
+# Convert Ezpr to normal arithmetic notation
+sub to_arith_string {
+  my ($self, $context) = @_;
+  $context //= 'MUL';
+  if ($self->is_con) { return $self->con }
+
+  if ($self->type eq "SUM") {
+    my @top = map $_->to_arith_string("SUM"), @{$self->top};
+    my @bot = map $_->to_arith_string("SUM"), @{$self->bot};
+    my $str = join " + " => @top;
+    $str .= join(" - " => "", @bot) if @bot;
+    $str = "($str)" if $context eq "PROD";
+    return $str;
+  } elsif ($self->type eq "MUL") {
+    my @top = map $_->to_arith_string("PROD"), @{$self->top};
+    my @bot = map $_->to_arith_string("PROD"), @{$self->bot};
+    if (@top == 1 && @bot == 1) {
+      $str = "$top[0]/$bot[0]";
+    } else {
+      my ($numerator, $denominator) = ("", "");
+      if (@top > 1) {
+        $numerator = join(" × " => @top);
+      } else {
+        $numerator = $top[0];
+      }
+
+      if (@bot > 1) {
+        $denominator = join(" × " => @bot);
+      } else {
+        $denominator = $bot[0];
+      }
+
+      if (@bot) {
+        $str = join " ÷ " => $numerator, $denominator;
+      } else {
+        $str = $numerator;
+      }
+    }
+    return $str;
+  } else { die "wut" }
+}
+
+
 sub cast {
   my ($self, $type) = @_;
   return $self if $self->type eq $type;
@@ -213,7 +251,7 @@ sub cast {
 
 my %identity = (SUM => 0, MUL => 1);
 sub normalize {
-  my ($self) = @_;
+  my ($self, $opt) = @_;
 
   return if $self->is_con;
 
@@ -271,6 +309,30 @@ sub normalize {
       }
     }
   }
+
+  # sort by value
+  @{$self->top} = sort by_expr_value @{$self->top};
+  @{$self->bot} = sort by_expr_value @{$self->bot};
+
+  return $self;
+}
+
+# Omits a lot of optimizations done by normalization
+# The idea here is to leave the expression in an equivalent form
+# **with the same constants**
+# For example instead of  (4 - (2 + (3 - 5))) we'd like to write
+#   4 + 5 - 2 - 3
+sub seminormalize {
+  my ($self, $opt) = @_;
+
+  return if $self->is_con;
+
+  # Recursively normalize subexpressions
+  for my $sub (@{$self->top}, @{$self->bot}) {
+    $sub->seminormalize;
+  }
+
+  $self->compact;
 
   # sort by value
   @{$self->top} = sort by_expr_value @{$self->top};
