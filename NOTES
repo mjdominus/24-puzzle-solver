@@ -22,3 +22,7 @@ Needed features:
        initial form: MUL [ 4 # MUL [ SUM [ 7 # 6 ] # 6 ] ]
        seminormalizes to MUL [ 4 6 # SUM [ 7 # 6 ] ]   (lifting)
        unconverts to (4×6)÷(7-6) which is quite acceptable
+
+   This seminormalization proposal will also allow (a + (b+c)) + d to
+   be formatted as a + b + c + d, which is great.
+
