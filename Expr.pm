@@ -257,7 +257,7 @@ sub normalize {
 
   if ($self->type eq "MUL" && $self->contains_zero) {
     $self->become_zero;
-    return;
+    return $self;
   # } elsif ($self->type eq "SUM" && $self->is_simple_zero) {
   #   $self->become_zero;
   #   return;

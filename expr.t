@@ -6,21 +6,23 @@ sub rpn_to_id {
   return from_list([split /\s+/, $rpn])->to_ezpr->normalize->to_string;
 }
 
+sub check_several_rpns {
+  my ($rpns, $idstring, $msg) = @_;
+  my $i = 1;
+  subtest "checking normalizations to '$idstring'" => sub {
+    for my $rpn (@$rpns) {
+      my $_msg = $msg ? "$msg ($rpn)" : "($rpn)";
+      is(rpn_to_id($rpn), $idstring, $_msg);
+      $i++;
+    }
+  };
+}
+
 subtest "normalizations of various complete expressions" => sub {
 
   # given a bunch of RPN expressions and an expected normal ID string,
   # make sure each expression normalizes to the expected string
-  my $check = sub {
-    my ($rpns, $idstring, $msg) = @_;
-    my $i = 1;
-    subtest "checking normalizations to '$idstring'" => sub {
-      for my $rpn (@$rpns) {
-        my $_msg = $msg ? "$msg ($rpn)" : "($rpn)";
-        is(rpn_to_id($rpn), $idstring, $_msg);
-        $i++;
-      }
-    };
-  };
+  my $check = \&check_several_rpns;
 
   subtest "2 2 2 3 : two solutions" => sub {
     $check->(["2 2 * 2 3 * *",
@@ -191,6 +193,21 @@ subtest "zero handling in sums" => sub {
     #    note "@$t: " . $z->to_string . "    " . $zn->to_string;
     #  note "@$t: " . $z->to_string;
   }
+};
+
+
+subtest "zero handling in products" => sub {
+
+  check_several_rpns(["0 1 2 3 + + *"],
+                     "0");
+
+  subtest "0 0 0 0 : completly optimized away!" => sub {
+    my $ezpr = from_list([qw/0 0 0 0 * * */])->to_ezpr;
+    my $norm = $ezpr->normalize;
+    ok($norm, "Normalized 0000***");
+    is($norm->to_string, "0");
+  };
+
 };
 
 done_testing();
