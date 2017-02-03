@@ -253,7 +253,7 @@ my %identity = (SUM => 0, MUL => 1);
 sub normalize {
   my ($self, $opt) = @_;
 
-  return if $self->is_con;
+  return $self if $self->is_con;
 
   if ($self->type eq "MUL" && $self->contains_zero) {
     $self->become_zero;

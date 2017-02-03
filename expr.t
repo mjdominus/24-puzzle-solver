@@ -151,6 +151,13 @@ subtest "normalizations of various complete expressions" => sub {
      ], "SUM [ MUL [ 2 6 # ] MUL [ 3 4 # ] # ]");
 
   };
+
+  subtest "regression for special case: normalization of constant" => sub {
+    my $con = Ezpr->new_con(53);
+    my $norm = $con->normalize;
+    ok($norm, "constant normalized");
+    is($norm->to_string, "53", "stringization");
+  };
 };
 
 subtest "various things that should not be conflated" => sub {
@@ -207,7 +214,6 @@ subtest "zero handling in products" => sub {
     ok($norm, "Normalized 0000***");
     is($norm->to_string, "0");
   };
-
 };
 
 done_testing();
