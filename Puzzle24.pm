@@ -44,6 +44,11 @@ sub pool_string {
   $pre . join($sep => @{$self->pool}) . $post;
 }
 
+has eliminate_duplicates => (
+  is => 'ro',
+  default => sub { 1 },
+);
+
 has solver => (
   is => 'rwp',
   lazy => 1,
@@ -56,6 +61,7 @@ sub _build_solver {
   return
     Puzzle24::Solver->new({ init   => $self->pool,
                             is_winner => $self->is_winner,
+                            eliminate_duplicates => $self->eliminate_duplicates,
                           });
 }
 
