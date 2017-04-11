@@ -1,0 +1,53 @@
+
+The existing design mixes up Puzzle24 (the puzzle) and
+Puzzle24::Solver (the solver).
+
+The Puzzle24 should just represent a puzzle.
+
+The solver should contain the actual search algorithm and the
+deduplication machinery.  It has a container for the puzzle and for
+the solutions.  A function for ranking solutions can interrogate the
+solver, or maybe it can be a method on the solver.
+
+Instead of:
+
+        my $solver = Puzzle24->new({ target => $TARGET,
+                                     pool => \@pool,
+                                     eliminate_duplicates => $opt{a} ? 0 : 1,
+                                   })->solver;
+
+it should be
+
+        my $solver = Puzzle24::Solver->new({
+                        puzzle => Puzzle24->new({ target => $TARGET,
+                                                  pool => \@pool,
+                                                })
+                        eliminate_duplicates => $opt{a} ? 0 : 1,
+                     });
+
+
+or there can be a reversed version:
+
+        my $solver = Puzzle24->new({ target => $TARGET,
+                                     pool => \@pool,
+                                   })->solver({eliminate_duplicates => } $opt{a} ? 0 : 1});
+
+Then instead of
+
+        while (my $expr = $solver->solve) {
+           (print out $expr)
+        }
+
+we would have:
+
+        my $it = $solver->solution_iterator(...);
+        while (my $solution = $it->()) {
+            (print out $solution->expr)
+        }
+
+or:
+
+        for my $solution ($solver->all_solutions) {
+            (print out $solution->expr)
+        }
+
