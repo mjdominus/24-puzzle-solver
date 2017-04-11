@@ -21,11 +21,27 @@ sub op { $_[0][0] }
 sub con { $_[0][1] }
 sub exprs { my ($op, @x) = @{$_[0]}; return @x }
 
+# good-looking normalized expression,
+# such as 6 + 2 × (2 + 7)
+# or      2 × (6 + 7) - 2
 sub to_string {
   my ($self) = @_;
   return $self->to_ezpr->seminormalize->to_arith_string;
 }
 
+# fully-parenthesized computer-type expression,
+# such as (6 + (2 * (7 + 2)))
+# or ((2 * (7 + 6)) - 2)
+sub to_tree_string {
+  my ($self) = @_;
+  return $self->con if $self->is_leaf;
+  my ($a, $b) = $self->exprs;
+  sprintf "(%s %s %s)", $a->to_tree_string, $self->op, $b->to_tree_string;
+}
+
+# RPN version of expression,
+# such as 7 2 + 2 * 6 +
+# or 7 6 + 2 * 2 -
 sub to_rpn {
   my ($self) = @_;
   return $self->con if $self->is_leaf;
@@ -33,8 +49,8 @@ sub to_rpn {
   return join " " => $a->to_rpn, $b->to_rpn, $self->op;
 }
 
-
-# RPN
+# input: list of tokens in RPN order
+# output: expression object
 sub from_list {
   my (@arr) = @{$_[0]};
   my @stack;
@@ -70,7 +86,6 @@ sub value {
   my ($av, $bv) = map $_->value, $x->exprs;
   return op_to_func($x->op)->($av, $bv);
 }
-
 
 sub to_ezpr {
   my ($x) = @_;

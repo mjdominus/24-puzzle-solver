@@ -189,9 +189,8 @@ sub solve {
     if (expr_count($node) == 1) {
       my $expr = $node->[0];
       if ($self->is_winner->($expr)) {
-        $DB::single=1;
         if (!($self->eliminate_duplicates && $self->has_seen(expr_id($expr)))) {
-          return expr_tree($expr);
+          return $expr;
         }
       }
     }

@@ -20,7 +20,8 @@ while (my $expr = $solver->solve) {
 #    printf "## %s\n", $expr->to_string;
     my $id_string = $expr->[0]->id_string;
     $seen{$id_string} //= $letter++;
-    printf "%1s   %-30s %-30s\n", $seen{$id_string}, $expr->[0]->to_string, $id_string;
+    printf "%1s   %-40s %-20s %-20s\n", $seen{$id_string},
+    $id_string, $expr->[0]->to_string, $expr->[0]->to_tree_string;
 #    print $expr->to_string, "\n";
 }
 
