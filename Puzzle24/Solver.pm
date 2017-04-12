@@ -2,6 +2,7 @@ package Puzzle24::Solver;
 use Scalar::Util 'reftype';
 use Moo;
 use Expr ();
+use Carp qw(croak);
 
 # building block numbers
 has init => (
@@ -85,7 +86,16 @@ sub has_seen {
   return $seen->{$str}++;
 }
 
-sub solve {
+sub all_solutions {
+  my ($self) = @_;
+  my @sol;
+  while (my $solution = $self->next_solution) {
+    push @sol, $solution;
+  }
+  return \@sol;
+}
+
+sub next_solution {
   my ($self) = @_;
 
   until ($self->queue_empty) {

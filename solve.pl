@@ -9,14 +9,14 @@ getopts('a', \my %opt);
 
 my ($TARGET, @pool) = @ARGV;
 
-my $solver = Puzzle24->new({ target => $TARGET,
+my $puzzle = Puzzle24->new({ target => $TARGET,
                              pool => \@pool,
-                             eliminate_duplicates => $opt{a} ? 0 : 1,
-                           })->solver;
+                           });
+my $solver = $puzzle->solver({eliminate_duplicates => $opt{a} ? 0 : 1});
 
 my %seen;
 my $letter = "A";
-while (my $expr = $solver->solve) {
+while (my $expr = $solver->next_solution) {
 #    printf "## %s\n", $expr->to_string;
     my $id_string = $expr->[0]->id_string;
     $seen{$id_string} //= $letter++;
