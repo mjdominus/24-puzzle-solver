@@ -3,6 +3,7 @@ use Scalar::Util 'reftype';
 use Moo;
 use Expr ();
 use Carp qw(croak);
+use Solution;
 
 # building block numbers
 has init => (
@@ -37,7 +38,17 @@ sub _build_ops {
 has debug => (
   is => 'rw',
   default => sub { 0 },
+ );
+
+has _all_solutions => (
+  is => 'ro',
+  init_arg => undef,
+  default => sub { [] },
 );
+sub _append_solutions {
+  my ($self, @solutions) = @_;
+  push @{$self->_all_solutions}, @solutions;
+}
 
 # not a method
 sub reversed { $_[0][2] && $_[0][2] =~ /r/ }
@@ -86,13 +97,15 @@ sub has_seen {
   return $seen->{$str}++;
 }
 
+sub iterator {
+  my ($self) = @_;
+  return sub { $self->next_solution };
+}
+
 sub all_solutions {
   my ($self) = @_;
-  my @sol;
-  while (my $solution = $self->next_solution) {
-    push @sol, $solution;
-  }
-  return \@sol;
+  1 while $self->next_solution;
+  return @{$self->_all_solutions};
 }
 
 sub next_solution {
@@ -103,10 +116,13 @@ sub next_solution {
 
     # is the current node a winner?
     if (expr_count($node) == 1) {
-      my $expr = $node->[0];
-      if ($self->is_winner->($expr)) {
-        if (!($self->eliminate_duplicates && $self->has_seen(expr_id($expr)))) {
-          return $expr;
+      my $expr_stuff = $node->[0];
+      if ($self->is_winner->($expr_stuff)) {
+        if (!($self->eliminate_duplicates && $self->has_seen(expr_id($expr_stuff)))) {
+          my ($expr, $val, $intermediates) = @$expr_stuff;
+          my $sol = Solution->from_expr($expr, { intermediates => $intermediates });
+          $self->_append_solutions($sol);
+          return $sol;
         }
       }
     }
