@@ -1,0 +1,19 @@
+Recognizing when two arithmetic expressions are essentially the same
+Code for solving “24” puzzles.  For example:
+
+     Given only the numbers 1, 3, 4, and 6, combine them using only
+     ordinary addition, subtraction, multiplication, and division, to
+     make the number 24.
+
+Discussions about this on [my blog](https://blog.plover.com/):
+
+  * [“A simple but difficult arithmetic puzzle”](https://blog.plover.com/math/17-puzzle.html)
+  * [“Solving twenty-four puzzles”](https://blog.plover.com/math/24-puzzle.html)
+  * [“Recognizing when two arithmetic expressions are essentially the same”](https://github.com/mjdominus/24-puzzle-solver)
+
+I, Mark Dominus, the author of the material in this Git repository,
+hosted at
+[https://github.com/mjdominus/24-puzzle-solver](https://github.com/mjdominus/24-puzzle-solver),
+hereby relinquish all copyrights and other property rights in the
+material, completely and in perpetuity, and place it entirely in the
+**public domain**.
